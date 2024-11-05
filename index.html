@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>HTML5 Tetris</title>
+        <link rel='stylesheet' href='style.css' />
+    </head>
+    <body>
+        <audio id="clearsound" src="sound/pop.ogg" preload="auto"></audio>
+        <div id="score-container">
+            <div>Score:</div>
+            <div id="score">0</div>
+            <div style="margin-left: 20px;">Highscore:</div>
+            <div id="highscore">0</div>
+        </div>
+        <canvas width="300" height="600"></canvas>
+        <div class="header">
+            <button id="playbutton" onclick="playButtonClicked();">Jogar</button>
+            <button id="tutorialButton" onclick="toggleTutorial();">Tutorial</button>
+            <div id="gameOverMessage">
+                <p>FIM DE JOGO!</p>
+                <p>Pontuação: <span id="finalScore"></span></p>
+                <p>Melhor Pontuação: <span id="finalhighScore"></span></p>
+                <button onclick="playButtonClicked()">Recomeçar</button>
+            </div>
+        </div>
+        <div id="nextPiece">
+            <div>Próxima Peça:</div>
+            <canvas id="nextPieceCanvas" width="80" height="80"></canvas>
+        </div>
+        <div id="tutorialMessage">
+            <div id="closeButton" onclick="toggleTutorial();">X</div>
+            <p><strong>Como jogar:</strong></p>
+            <p>Setas direcionais < >: movimetam as peças para os lados </p>
+            <p>Seta direcional para cima: muda a posição da peça</p>
+            <p>Seta direcional para baixo: aumenta a velocidade a qual desce as peças</p>
+            <p><strong>Objetivo:</strong> combinar peças para limpar as linhas sem deixar que uma peça toque no topo da tela</p>
+        </div>
+        <script src='js/tetris.js'></script>
+        <script src='js/controller.js'></script>
+        <script src='js/render.js'></script>
+    </body>
+</html>
