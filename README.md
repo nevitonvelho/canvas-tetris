@@ -1,14 +1,13 @@
-Projeto de Manutenção de Software
+A very simple HTML5 version of Tetris, for educational purposes, made in 45 minutes.
 
-Foram feitas as seguintes alterações:
-- Ajustes de Code Smells
-- Criado un sistem de pontuação com salvamento local do highscore
-- Criado um menu de tutorial do jogo
-- Criado uma tela de fim de jogo
-- Criado um quadro que exibe qual será a próxima peça a ser exibida no tabuleiro.
+Watch the making-of timelapse:
+http://www.youtube.com/watch?v=GQTZ_TPxJhM
 
-Link do Repositório Original: https://github.com/dionyziz/canvas-tetris
+Play:
+https://dionyziz.com/graphics/canvas-tetris/
 
+Or you can [play it here](https://plugins.quadnix.com/launch?author=quadnix&id=canvas-tetris),
+powered by [Quadnix Plugins](https://plugins.quadnix.com).
 
 License
 =======
