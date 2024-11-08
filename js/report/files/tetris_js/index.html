@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - tetris.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>tetris.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">61.41</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">208</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">69.61</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.46</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var COLS = 10, ROWS = 20;
+var board = [];
+var lose;
+var interval;
+var intervalRender;
+var current; // current moving shape
+var currentX, currentY; // position of current shape
+var freezed; // is current shape settled on the board?
+var shapes = [
+    [ 1, 1, 1, 1 ],
+    [ 1, 1, 1, 0,
+      1 ],
+    [ 1, 1, 1, 0,
+      0, 0, 1 ],
+    [ 1, 1, 0, 0,
+      1, 1 ],
+    [ 1, 1, 0, 0,
+      0, 1, 1 ],
+    [ 0, 1, 1, 0,
+      1, 1 ],
+    [ 0, 1, 0, 0,
+      1, 1, 1 ]
+];
+var colors = [
+    &#039;cyan&#039;, &#039;orange&#039;, &#039;blue&#039;, &#039;yellow&#039;, &#039;red&#039;, &#039;green&#039;, &#039;purple&#039;
+];
+
+// creates a new 4x4 shape in global variable &#039;current&#039;
+// 4x4 so as to cover the size when the shape is rotated
+function newShape() {
+    var id = Math.floor( Math.random() * shapes.length );
+    var shape = shapes[ id ]; // maintain id for color filling
+
+    current = [];
+    for ( var y = 0; y &lt; 4; ++y ) {
+        current[ y ] = [];
+        for ( var x = 0; x &lt; 4; ++x ) {
+            var i = 4 * y + x;
+            if ( typeof shape[ i ] != &#039;undefined&#039; &amp;&amp; shape[ i ] ) {
+                current[ y ][ x ] = id + 1;
+            }
+            else {
+                current[ y ][ x ] = 0;
+            }
+        }
+    }
+    
+    // new shape starts to move
+    freezed = false;
+    // position where the shape will evolve
+    currentX = 5;
+    currentY = 0;
+}
+
+// clears the board
+function init() {
+    for ( var y = 0; y &lt; ROWS; ++y ) {
+        board[ y ] = [];
+        for ( var x = 0; x &lt; COLS; ++x ) {
+            board[ y ][ x ] = 0;
+        }
+    }
+}
+
+// keep the element moving down, creating new shapes and clearing lines
+function tick() {
+    if ( valid( 0, 1 ) ) {
+        ++currentY;
+    }
+    // if the element settled
+    else {
+        freeze();
+        valid(0, 1);
+        clearLines();
+        if (lose) {
+            clearAllIntervals();
+            return false;
+        }
+        newShape();
+    }
+}
+
+// stop shape at its position and fix it to board
+function freeze() {
+    for ( var y = 0; y &lt; 4; ++y ) {
+        for ( var x = 0; x &lt; 4; ++x ) {
+            if ( current[ y ][ x ] ) {
+                board[ y + currentY ][ x + currentX ] = current[ y ][ x ];
+            }
+        }
+    }
+    freezed = true;
+}
+
+// returns rotates the rotated shape &#039;current&#039; perpendicularly anticlockwise
+function rotate( current ) {
+    var newCurrent = [];
+    for ( var y = 0; y &lt; 4; ++y ) {
+        newCurrent[ y ] = [];
+        for ( var x = 0; x &lt; 4; ++x ) {
+            newCurrent[ y ][ x ] = current[ 3 - x ][ y ];
+        }
+    }
+
+    return newCurrent;
+}
+
+// check if any lines are filled and clear them
+function clearLines() {
+    for ( var y = ROWS - 1; y &gt;= 0; --y ) {
+        var rowFilled = true;
+        for ( var x = 0; x &lt; COLS; ++x ) {
+            if ( board[ y ][ x ] == 0 ) {
+                rowFilled = false;
+                break;
+            }
+        }
+        if ( rowFilled ) {
+            document.getElementById( &#039;clearsound&#039; ).play();
+            for ( var yy = y; yy &gt; 0; --yy ) {
+                for ( var x = 0; x &lt; COLS; ++x ) {
+                    board[ yy ][ x ] = board[ yy - 1 ][ x ];
+                }
+            }
+            ++y;
+        }
+    }
+}
+
+function keyPress( key ) {
+    switch ( key ) {
+        case &#039;left&#039;:
+            if ( valid( -1 ) ) {
+                --currentX;
+            }
+            break;
+        case &#039;right&#039;:
+            if ( valid( 1 ) ) {
+                ++currentX;
+            }
+            break;
+        case &#039;down&#039;:
+            if ( valid( 0, 1 ) ) {
+                ++currentY;
+            }
+            break;
+        case &#039;rotate&#039;:
+            var rotated = rotate( current );
+            if ( valid( 0, 0, rotated ) ) {
+                current = rotated;
+            }
+            break;
+        case &#039;drop&#039;:
+            while( valid(0, 1) ) {
+                ++currentY;
+            }
+            tick();
+            break;
+    }
+}
+
+// checks if the resulting position of current shape will be feasible
+function valid( offsetX, offsetY, newCurrent ) {
+    offsetX = offsetX || 0;
+    offsetY = offsetY || 0;
+    offsetX = currentX + offsetX;
+    offsetY = currentY + offsetY;
+    newCurrent = newCurrent || current;
+
+    for ( var y = 0; y &lt; 4; ++y ) {
+        for ( var x = 0; x &lt; 4; ++x ) {
+            if ( newCurrent[ y ][ x ] ) {
+                if ( typeof board[ y + offsetY ] == &#039;undefined&#039;
+                  || typeof board[ y + offsetY ][ x + offsetX ] == &#039;undefined&#039;
+                  || board[ y + offsetY ][ x + offsetX ]
+                  || x + offsetX &lt; 0
+                  || y + offsetY &gt;= ROWS
+                  || x + offsetX &gt;= COLS ) {
+                    if (offsetY == 1 &amp;&amp; freezed) {
+                        lose = true; // lose if the current shape is settled at the top most row
+                        document.getElementById(&#039;playbutton&#039;).disabled = false;
+                    } 
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+function playButtonClicked() {
+    newGame();
+    document.getElementById(&quot;playbutton&quot;).disabled = true;
+}
+
+function newGame() {
+    clearAllIntervals();
+    intervalRender = setInterval( render, 30 );
+    init();
+    newShape();
+    lose = false;
+    interval = setInterval( tick, 400 );
+}
+
+function clearAllIntervals(){
+    clearInterval( interval );
+    clearInterval( intervalRender );
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
