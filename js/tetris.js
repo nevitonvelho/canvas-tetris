@@ -133,13 +133,13 @@ function init() {
 }
 
 function tick() {
-    if (lose) return; // Não continua se o jogo foi perdido
+    if (lose) return;
 
     if (valid(0, 1)) {
         currentY++;
     } else {
         freeze();
-        clearLines();
+        clearLines(); // Chame aqui após congelar a peça
         if (lose) {
             gameOverSound.play();
             clearAllIntervals();
@@ -151,6 +151,7 @@ function tick() {
         newShape();
     }
 }
+
 
 
 // stop shape at its position and fix it to board
