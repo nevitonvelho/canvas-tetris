@@ -37,6 +37,7 @@ var shapes = [
 var colors = [
     'cyan', 'orange', 'blue', 'yellow', 'red', 'green', 'purple'
 ];
+
 var isPaused = false; // Estado do jogo
 
 // Função para alternar o estado de pausa
@@ -138,6 +139,7 @@ function tick() {
         currentY++;
     } else {
         freeze();
+        clearLines();
         if (lose) {
             gameOverSound.play();
             clearAllIntervals();
@@ -177,40 +179,68 @@ function rotate( current ) {
     return newCurrent;
 }
 
-// Verifica se a linha será limpa
 function clearLines() {
-    for (var y = ROWS - 1; y >= 0; --y) {
+    let linesCleared = 0;
+    for (let y = ROWS - 1; y >= 0; y--) {
         if (isRowFilled(y)) {
             clearAndMoveLines(y);
-            score += 100; 
-            clearLineSound.play(); //Reproduz um som quando uma linha é limpa
-            updateScore();
+            y++; // Reavalia a mesma linha após mover as superiores
+            linesCleared++;
         }
     }
+
+    if (linesCleared > 0) {
+        score += linesCleared * 100; // Incrementa a pontuação baseada nas linhas limpas
+        clearLineSound.play(); // Som ao limpar linhas
+        updateScore();
+    }
 }
+
+
+function clearAndMoveLines(lineIndex) {
+    // Remove a linha completa
+    for (let x = 0; x < COLS; x++) {
+      board[lineIndex][x] = 0;
+    }
+    
+    // Move todas as linhas acima para baixo
+    for (let y = lineIndex; y > 0; y--) {
+      for (let x = 0; x < COLS; x++) {
+        board[y][x] = board[y - 1][x];
+      }
+    }
+    
+    // Preenche a linha de topo com zeros
+    for (let x = 0; x < COLS; x++) {
+      board[0][x] = 0;
+    }
+  }
+  
+
+function isRowFilled(y) {
+    for (let x = 0; x < COLS; x++) {
+        if (board[y][x] === 0) {
+            return false; // Linha não está completa
+        }
+    }
+    return true; // Linha está completa
+}
+
+
+
+
 
 // Verifica se a linha está preenchida
 function isRowFilled(y) {
-    for (var x = 0; x < COLS; ++x) {
-        if (board[y][x] == 0) {
-            return false;
+    for (let x = 0; x < COLS; x++) {
+        if (board[y][x] === 0) {
+            return false; // Linha não está completa
         }
     }
-    return true;
+    return true; // Linha está completa
 }
 
-// Limpa a linha e move as linhas acima para baixo
-function clearAndMoveLines(y) {
-    document.getElementById('clearsound').play();
-    for (var yy = y; yy > 0; --yy) {
-        for (var x = 0; x < COLS; ++x) {
-            board[yy][x] = board[yy - 1][x];
-        }
-    }
-    for (var x = 0; x < COLS; ++x) {
-        board[0][x] = 0;
-    }
-}
+
 
 function moveLeft() {
     if (valid(-1)) {
