@@ -16,6 +16,18 @@ canvas {
     margin-top: 10px;
 }
 
+#toggleMusic {
+    width: 120px;
+    height: 50px;
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+    background-color: white;
+    cursor: pointer;
+    margin-top: 10px;
+    margin-left: 20px;
+}
 .header {
     display: flex;
     justify-content: center;

@@ -1,3 +1,14 @@
+// Carregando os arquivos de som
+const pieceDropSound = new Audio('./sound/popSound.mp3'); //Som de peça colocada
+const highScoreSound = new Audio('./sound/highScore.mp3'); //Som de maior pontuação
+const clearLineSound = new Audio('./sound/clearLine.mp3'); //Som ao limpar uma linha
+const gameOverSound = new Audio('./sound/gameOver.mp3'); //Som ao perder o jogo
+
+// Música de fundo
+const backgroundMusic = new Audio('./sound/background.mp3'); 
+backgroundMusic.loop = true; // Define a música para tocar em loop
+backgroundMusic.volume = 0.3; // Ajusta o volume (0.0 a 1.0)
+
 var COLS = 10, ROWS = 20;
 var board = [];
 var lose;
@@ -133,6 +144,7 @@ function tick() {
         clearLines();
         if (lose) {
             clearAllIntervals();
+            gameOverSound.play(); //Toca o som de game over
             document.getElementById('gameOverMessage').style.display = 'block';
             document.getElementById('playbutton').disabled = false;
             document.getElementById('finalScore').innerText = score; 
@@ -151,6 +163,7 @@ function freeze() {
             }
         }
     }
+    pieceDropSound.play(); // Reproduz o som quando a peça é colocada em sua posição final
     freezed = true;
 }
 
@@ -167,12 +180,13 @@ function rotate( current ) {
     return newCurrent;
 }
 
-// Verofoca se a linha será limpa
+// Verifica se a linha será limpa
 function clearLines() {
     for (var y = ROWS - 1; y >= 0; --y) {
         if (isRowFilled(y)) {
             clearAndMoveLines(y);
             score += 100; 
+            clearLineSound.play(); //Reproduz um som quando uma linha é limpa
             updateScore();
         }
     }
@@ -286,11 +300,14 @@ function newGame() {
     newShape();
     lose = false;
     interval = setInterval( tick, 400 );
+    backgroundMusic.play(); // Inicia a música de fundo
 }
 
 function clearAllIntervals(){
     clearInterval( interval );
     clearInterval( intervalRender );
+    backgroundMusic.pause(); // Pausa a música de fundo
+    backgroundMusic.currentTime = 0; // Reinicia a música ao início
 }
 
 function updateScore() {
@@ -316,6 +333,11 @@ function updateHighScore() {
         highscore = score;
         document.getElementById('highscore').innerText = highscore;
         saveHighScore();
+        
+        // Atrasa o som de maior pontuação em 1 segundo (1000ms) para que não toque ao mesmo tempo que o som de game over
+        setTimeout(() => {
+            highScoreSound.play();
+        }, 1000);
     } else {
         document.getElementById('highscore').innerText = highscore;
     }
@@ -336,3 +358,15 @@ function toggleTutorial() {
         document.getElementById('playbutton').disabled = false;
     }
 };
+
+//Controla a execução da música de fundo
+function toggleMusic() {
+    const button = document.getElementById('toggleMusic');
+    if (backgroundMusic.paused) {
+        backgroundMusic.play();
+        button.innerText = 'Música: Ligada';
+    } else {
+        backgroundMusic.pause();
+        button.innerText = 'Música: Desligada';
+    }
+}

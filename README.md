@@ -7,6 +7,9 @@ Foram feitas as seguintes alterações:
 - Criado uma tela de fim de jogo
 - Criado um quadro que exibe qual será a próxima peça a ser exibida no tabuleiro.
 
+- Adicionado sons conforme a ação realizada no jogo. (Sons disponíveis em https://pixabay.com/pt/)
+- Adicionado musica de fundo, com a opção de desligá-la (Sons disponíveis em https://pixabay.com/pt/)
+
 Link do Repositório Original: https://github.com/dionyziz/canvas-tetris
 
 
