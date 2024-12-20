@@ -4,6 +4,26 @@ canvas {
     border: 1px solid black;
 }
 
+.pause-button {
+    position: absolute;
+    top: 10px;
+    right: 30px;
+    width: 200px;
+    height: 50px;
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 30px;
+    font-weight: bold;
+    background-color: white;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.pause-button:hover {
+    background-color: #e85a50; /* Cor ao passar o mouse */
+}
+
+
 #playbutton {
     width: 100px;
     height: 50px;

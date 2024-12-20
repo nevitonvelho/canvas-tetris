@@ -37,48 +37,70 @@ var shapes = [
 var colors = [
     'cyan', 'orange', 'blue', 'yellow', 'red', 'green', 'purple'
 ];
+var isPaused = false; // Estado do jogo
 
-// Função para gerar uma peça aleatória
+// Função para alternar o estado de pausa
+function togglePause() {
+    if (isPaused) {
+        interval = setInterval(tick, 400); 
+        intervalRender = setInterval(render, 30); 
+    } else {
+        clearInterval(interval); 
+        clearInterval(intervalRender); 
+    }
+    isPaused = !isPaused; 
+}
+
+// Adiciona botão de pausa à interface
+var pauseButton = document.createElement('button');
+pauseButton.innerText = 'Pausar';
+pauseButton.className = 'pause-button';
+document.body.appendChild(pauseButton);
+pauseButton.addEventListener('click', togglePause);
+
+
 function generateRandomPiece() {
-    var id = Math.floor( Math.random() * shapes.length );
-    var shape = shapes[ id ];
+    var id = Math.floor(Math.random() * shapes.length);
+    var shape = shapes[id];
     return { shape: shape, id: id };
 }
 
-// Cria uma nova peça 4x4 na variável global 'current'
-// 4x4 para cobrir o tamanho quando a forma é rotacionada
 function newShape() {
     if (!nextPiece) {
         nextPiece = generateRandomPiece();
     }
+
     var id = nextPiece.id;
     var shape = nextPiece.shape;
 
     current = [];
-    for ( var y = 0; y < 4; ++y ) {
-        current[ y ] = [];
-        for ( var x = 0; x < 4; ++x ) {
+    for (var y = 0; y < 4; ++y) {
+        current[y] = [];
+        for (var x = 0; x < 4; ++x) {
             var i = 4 * y + x;
-            if ( typeof shape[ i ] != 'undefined' && shape[ i ] ) {
-                current[ y ][ x ] = id + 1;
-            }
-            else {
-                current[ y ][ x ] = 0;
-            }
+            current[y][x] = shape[i] ? id + 1 : 0;
         }
     }
-    
+
     nextPiece = generateRandomPiece();
     drawNextPiece();
 
-    // A nova peça começa a se mover
+    // Configura a posição inicial
     freezed = false;
-    // Posição onde a peça evoluirá
     currentX = 4;
     currentY = 0;
+
+    // Verifica se a peça inicial colide imediatamente (jogo perdido)
+    if (!valid(0, 0)) {
+        lose = true; // Sinaliza que o jogo foi perdido
+        clearAllIntervals(); // Interrompe os loops
+        gameOverSound.play(); // Som de game over
+        document.getElementById('gameOverMessage').style.display = 'block';
+        document.getElementById('playbutton').disabled = false;
+    }
 }
 
-// Desenha a próxima peça no canvas nextPieceCanvas
+
 function drawNextPiece() {
     const canvas = document.getElementById('nextPieceCanvas');
     const context = canvas.getContext('2d');
@@ -87,72 +109,47 @@ function drawNextPiece() {
     var shape = nextPiece.shape;
     var id = nextPiece.id;
 
-    // Calcula a largura e altura da peça
-    var minX = 4, maxX = 0, minY = 4, maxY = 0;
+    context.fillStyle = colors[id];
     for (var y = 0; y < 4; ++y) {
         for (var x = 0; x < 4; ++x) {
             var i = 4 * y + x;
             if (shape[i]) {
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
-            }
-        }
-    }
-
-    var pieceWidth = maxX - minX + 1;
-    var pieceHeight = maxY - minY + 1;
-
-    // Calcula o offset para centralizar a peça
-    var offsetX = Math.floor((canvas.width - pieceWidth * 20) / 2);
-    var offsetY = Math.floor((canvas.height - pieceHeight * 20) / 2);
-
-    context.fillStyle = colors[id]; // Define a cor da peça
-    for (var y = 0; y < 4; ++y) { 
-        for (var x = 0; x < 4; ++x) {
-            var i = 4 * y + x;
-            if (shape[i]) {
-                context.fillRect(offsetX + (x - minX) * 20, offsetY + (y - minY) * 20, 20, 20);
+                context.fillRect(x * 20, y * 20, 20, 20);
             }
         }
     }
 }
 
-// clears the board
 function init() {
-    for ( var y = 0; y < ROWS; ++y ) {
-        board[ y ] = [];
-        for ( var x = 0; x < COLS; ++x ) {
-            board[ y ][ x ] = 0;
+    for (var y = 0; y < ROWS; ++y) {
+        board[y] = [];
+        for (var x = 0; x < COLS; ++x) {
+            board[y][x] = 0;
         }
     }
-    score = 0; 
-    loadHighScore();
+    score = 0;
     updateScore();
 }
 
-// keep the element moving down, creating new shapes and clearing lines
 function tick() {
-    if ( valid( 0, 1 ) ) {
-        ++currentY;
-    }
-    // if the element settled
-    else {
+    if (lose) return; // Não continua se o jogo foi perdido
+
+    if (valid(0, 1)) {
+        currentY++;
+    } else {
         freeze();
-        valid(0, 1);
-        clearLines();
         if (lose) {
+            gameOverSound.play();
             clearAllIntervals();
-            gameOverSound.play(); //Toca o som de game over
             document.getElementById('gameOverMessage').style.display = 'block';
             document.getElementById('playbutton').disabled = false;
-            document.getElementById('finalScore').innerText = score; 
-            return false;
+            document.getElementById('finalScore').innerText = score;
+            return;
         }
         newShape();
     }
 }
+
 
 // stop shape at its position and fix it to board
 function freeze() {
@@ -257,28 +254,26 @@ function keyPress(key) {
 
 
 // checks if the resulting position of current shape will be feasible
-function valid( offsetX, offsetY, newCurrent ) {
-    offsetX = offsetX || 0;
-    offsetY = offsetY || 0;
-    offsetX = currentX + offsetX;
-    offsetY = currentY + offsetY;
-    newCurrent = newCurrent || current;
+function valid(offsetX = 0, offsetY = 0, newCurrent = current) {
+    const newX = currentX + offsetX;
+    const newY = currentY + offsetY;
 
-    for ( var y = 0; y < 4; ++y ) {
-        for ( var x = 0; x < 4; ++x ) {
-            if ( newCurrent[ y ][ x ] ) {
-                if ( typeof board[ y + offsetY ] == 'undefined'
-                  || typeof board[ y + offsetY ][ x + offsetX ] == 'undefined'
-                  || board[ y + offsetY ][ x + offsetX ]
-                  || x + offsetX < 0
-                  || y + offsetY >= ROWS
-                  || x + offsetX >= COLS ) {
-                    if (offsetY == 1 && freezed) {
-                        lose = true; // lose if the current shape is settled at the top most row
-                        document.getElementById('playbutton').disabled = false;
-                        updateHighScore();
-                        document.getElementById('finalhighScore').innerText = highscore;
-                    } 
+    for (let y = 0; y < 4; y++) {
+        for (let x = 0; x < 4; x++) {
+            if (newCurrent[y][x]) {
+                if (
+                    typeof board[newY + y] === 'undefined' || // Fora dos limites verticais
+                    typeof board[newY + y][newX + x] === 'undefined' || // Fora dos limites horizontais
+                    board[newY + y][newX + x] || // Posição já ocupada
+                    newX + x < 0 || // Fora do lado esquerdo
+                    newX + x >= COLS || // Fora do lado direito
+                    newY + y >= ROWS // Fora da parte inferior
+                ) {
+                    // Perda ocorre quando não é possível descer e a peça está no topo
+                    if (offsetY === 1 && freezed) {
+                        lose = true;
+                        return false;
+                    }
                     return false;
                 }
             }
@@ -286,6 +281,7 @@ function valid( offsetX, offsetY, newCurrent ) {
     }
     return true;
 }
+
 
 function playButtonClicked() {
     document.getElementById('gameOverMessage').style.display = 'none';//
